@@ -1,7 +1,20 @@
 import { defineConfig } from 'vite'
 import viteImagemin from 'vite-plugin-imagemin'
 
-let reserved = []
+let infos = [
+  'welcome',
+  'no_piece',
+  'yes_piece',
+  'zero_attacked_by_lower',
+  'zero_attacked_by_upper',
+  'attacks',
+  'attacked_by',
+  'blocks',
+  'blocked_attacks',
+  'blocked_attacked_by',
+]
+let reserved = ['mid', 'bass', 'treble', 'black', 'white', ...infos]
+
 
 export default defineConfig({
   base: './',
@@ -17,9 +30,10 @@ export default defineConfig({
         module: true,
         properties: {
           keep_quoted: 'strict',
-          reserved
-        }
-      }
+          reserved,
+          //debug: true
+        },
+      },
     },
     modulePreload: {
       polyfill: false,
