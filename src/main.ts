@@ -615,8 +615,33 @@ function pos2board_file_rank(pos: XY) {
     return res
 }
 
+function short_short(fen: FEN) {
+    return mor_short(fen)
+    /*
+    let res = mor_short(fen)
+
+    res.map(res => {
+        let bb = []
+        outer: for (let i = 0; i < res.blocks.length; i++) {
+
+            for (let j = i + 1; j < res.blocks.length; j++) {
+                let a = res.blocks[i]
+                let b= res.blocks[j]
+
+                if (a[0] === b[1] && a[1] === b[0]) {
+                    continue outer
+                }
+            }
+            bb.push(res.blocks[i])
+        }
+        res.blocks = bb
+    })
+    return res
+    */
+}
+
 function pp_attacks() {
-    return mor_short(pp_fen())
+    return short_short(pp_fen())
 }
 
 function pp_fen() {
@@ -710,7 +735,7 @@ let goals: FEN[] = [
     "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
 ]
 
-const goal_attacks = () => mor_short(goals[i_goal])
+const goal_attacks = () => short_short(goals[i_goal])
 
 let info_call: [string, string] | undefined
 
