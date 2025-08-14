@@ -128,6 +128,9 @@ function wrap_text_fx(text: string, x: number, y: number, maxWidth: number, line
 }
 
 function _render() {
+
+    fx.clearRect(0, 0, 1920, 1080)
+
     cx.fillRect(0, 0, 320, 180)
 
 
@@ -167,41 +170,24 @@ function _render() {
 
     spr(111, 270, 188, 20, 10) 
 
-    render_info(infos['welcome'])
+    if (info_call) {
+        render_info(info_call)
+    } else {
+        render_info(infos['welcome'])
+    }
 
 
     spr(111, 238, 2, 30, 23)
 
-    let ga = goal_attacks()
-
-    let pa = pp_attacks()
-
-
-    let y = 2
-    for (let a of ga) {
-        let x = 238
-
-        ;[x, y] = render_a(a, x, y)
-
-        let a2 = pa.find(_ => _.p1 === a.p1)
-
-        let s_match = a2 === undefined || !aa_match(a, a2) ? 29 : 30
-
-        spr(s_match, x + 4, y + 4)
-
-        x += 10
-
-        if (a2 === undefined) {
-            spr(31, x + 4, y + 4)
-        } else {
-            ;[x, y] = render_a(a2, x, y)
-        }
-
-        y += 12
-        x = 182
+    let ih = rule_infos.find(_ => _.is_hovering)
+    if (ih) {
+        let [x, y, w, h] = ih.bb
+        cx.strokeRect(x, y, w, h)
     }
-    
 
+    for (let rr of rule_renders) {
+        spr(rr[0], rr[1], rr[2])
+    }
 
     if (drag_hp) {
         spr(piece_to_i(drag_hp.piece), ...drag_hp.pos, 3)
@@ -261,11 +247,25 @@ function aa_match(a: AttackPiece, b: AttackPiece) {
     return true
 }
 
-function render_a(a: AttackPiece, x: number, y: number) {
+const build_render_spr = (i: number, x: number, y: number) => rule_renders.push([i, x, y, 0])
+const build_render_info = (info: [string, string], x: number, y: number, w: number, h: number) => rule_infos.push({
+    info,
+    bb: [x, y, w, h],
+    is_hovering: false
+})
+
+
+
+function build_render_a(a: AttackPiece, x: number, y: number) {
+    const spr = build_render_spr
+    const ipr = build_render_info
+
         spr(piece_to_i(a.p1), x + 4, y + 4)
         if (a.p1.match(/2/)) {
             spr(82, x + 4, y + 4)
         }
+        ipr(infos.yes_piece(a.p1), x + 2, y + 2, 12, 12)
+
 
         x += 8
 
@@ -274,16 +274,23 @@ function render_a(a: AttackPiece, x: number, y: number) {
 
         if (zero_attacked_by_lower(a)) {
             spr(32, x + 4, y + 4)
+
+            ipr(infos.zero_attacked_by_lower(a.p1), x + 2, y + 2, 12, 12)
+
             x += 10
         }
         if (zero_attacked_by_upper(a)) {
             spr(33, x + 4, y + 4)
+
+            ipr(infos.zero_attacked_by_upper(a.p1), x + 2, y + 2, 12, 12)
             x += 10
         }
 
         for (let aa of a.attacks) {
 
             spr(35, x + 2, y+ 4)
+
+            ipr(infos.attacks(a.p1, aa), x + 4, y + 2, 14, 12)
             x += 5
             spr(piece_to_i(aa), x + 4, y + 4)
             if (aa.match(/2/)) {
@@ -299,6 +306,8 @@ function render_a(a: AttackPiece, x: number, y: number) {
             if (aa.match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
+
+            ipr(infos.attacked_by(a.p1, aa), x + 4, y + 2, 14, 12)
             x += 5 + 4
             spr(34, x + 2, y+ 4)
 
@@ -307,9 +316,11 @@ function render_a(a: AttackPiece, x: number, y: number) {
 
         for (let bb of a.blocks) {
             spr(piece_to_i(bb[1]), x + 4, y + 4)
-            if (bb[0].match(/2/)) {
+            if (bb[1].match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
+
+            ipr(infos.blocks(a.p1, ...bb), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(36, x + 2, y + 4)
             x += 5
@@ -326,6 +337,7 @@ function render_a(a: AttackPiece, x: number, y: number) {
             if (bb[0].match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
+            ipr(infos.blocked_attacks(a.p1, bb[1], bb[0]), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(37, x + 2, y + 4)
             x += 5
@@ -338,9 +350,10 @@ function render_a(a: AttackPiece, x: number, y: number) {
 
         for (let bb of a.blocked_attacked_by) {
             spr(piece_to_i(bb[1]), x + 4, y + 4)
-            if (bb[0].match(/2/)) {
+            if (bb[1].match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
+            ipr(infos.blocked_attacked_by(a.p1, bb[1], bb[0]), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(38, x + 2, y + 4)
             x += 5
@@ -356,8 +369,74 @@ function render_a(a: AttackPiece, x: number, y: number) {
         return [x, y]
 }
 
-const infos: Record<string, [string, string]> = {
-    welcome: ['welcome to mor chess; drag pieces on to the board, but there are some rules.', 'drag out of the board to remove a piece.']
+const infos: Record<string, any> = {
+    welcome: ['welcome to mor chess; drag pieces on to the board, but there are some rules.', 'drag out of the board to remove a piece.'],
+    no_piece(piece: Pieces) {
+        let p1 = pretty_piece(piece)
+        return [`${p1} hasn't been placed yet.`, '']
+    },
+    yes_piece(piece: Pieces) {
+        let p1 = pretty_piece(piece)
+        return [`A ${p1} on the board.`, '']
+    },
+    zero_attacked_by_lower(piece: Pieces) {
+        let attackers = piece.toLowerCase() === piece ? 'defenders' : 'attackers'
+        let p1 = pretty_piece(piece)
+        return [`${p1} has zero ${attackers}.`, '']
+    },
+    zero_attacked_by_upper(piece: Pieces) {
+        let attackers = piece.toLowerCase() === piece ? 'attackers' : 'defenders'
+        let p1 = pretty_piece(piece)
+        return [`${p1} has zero ${attackers}.`, '']
+    },
+    attacks(piece: Pieces, attacks: Pieces) {
+
+        let p1 = pretty_piece(piece)
+        let a1 = pretty_piece(attacks)
+
+        return [`${p1} is ${attacking(piece, attacks)} ${a1}.`, ``]
+    },
+    attacked_by(piece: Pieces, attacks: Pieces) {
+
+        let p1 = pretty_piece(piece)
+        let a1 = pretty_piece(attacks)
+
+        return [`${p1} is ${attacked(piece, attacks)} by ${a1}.`, ``]
+    },
+    blocks(piece: Pieces, a: Pieces, b: Pieces) {
+
+        let p1 = pretty_piece(piece)
+        let a1 = pretty_piece(a)
+        let b1 = pretty_piece(b)
+
+        return [`${p1} blocks ${a1} ${attacking(a, b)} ${b1}.`, ``]
+
+    },
+    blocked_attacks(piece: Pieces, a: Pieces, b: Pieces) {
+        let p1 = pretty_piece(piece)
+        let a1 = pretty_piece(a)
+        let b1 = pretty_piece(b)
+
+        return [`${p1} is ${attacking(piece, a)} ${a1}, blocked by ${b1}.`, ``]
+    },
+    blocked_attacked_by(piece: Pieces, a: Pieces, b: Pieces) {
+        let p1 = pretty_piece(piece)
+        let a1 = pretty_piece(a)
+        let b1 = pretty_piece(b)
+
+        return [`${p1} is ${attacked(piece, a)} by ${a1}, blocked by ${b1}.`, ``]
+    }
+}
+
+const attacking = (a: Pieces, b: Pieces) => (a.toLowerCase() === a) === (b.toLowerCase() === b) ? 'defending' : 'attacking'
+const attacked = (a: Pieces, b: Pieces) => (a.toLowerCase() === a) === (b.toLowerCase() === b) ? 'defended' : 'attacked'
+
+function pretty_piece(p: Pieces) {
+
+    let p1 = parse_piece(p)
+    let two = p.match(/2/) ? '2' :''
+
+    return p1.role[0].toUpperCase() + p1.role.slice(1) + two
 }
 
 function piece_to_i(p: Pieces) {
@@ -394,6 +473,18 @@ function _update(delta: number) {
 
         if (drag_hp !== undefined) {
             drag_hp.pos = [cursor[0] - 4, cursor[1] - 4]
+        } else {
+
+            for (let i of rule_infos) {
+                i.is_hovering = false
+            }
+
+            for (let i of rule_infos) {
+                if (box_intersect(i.bb, cursor_box(cursor))) {
+                    i.is_hovering = true
+                }
+            }
+
         }
     }
 
@@ -428,11 +519,50 @@ function _update(delta: number) {
 
                 pp_fix_twos()
 
+                is_dirty_rule_render = true
             }
 
             drag_hp = undefined
         }
     }
+
+    if (is_dirty_rule_render) {
+        is_dirty_rule_render = false
+        rule_renders = []
+        rule_infos = []
+
+        let ga = goal_attacks()
+
+        let pa = pp_attacks()
+
+
+        let y = 2
+        for (let a of ga) {
+            let x = 238
+
+                ;[x, y] = build_render_a(a, x, y)
+
+            let a2 = pa.find(_ => _.p1 === a.p1)
+
+            let s_match = a2 === undefined || !aa_match(a, a2) ? 29 : 30
+
+            build_render_spr(s_match, x + 4, y + 4)
+
+            x += 10
+
+            if (a2 === undefined) {
+                build_render_spr(31, x + 4, y + 4)
+                build_render_info(infos['no_piece'](a.p1), x + 2, y + 2, 12, 12)
+            } else {
+                ;[x, y] = build_render_a(a2, x, y)
+            }
+
+            y += 12
+            x = 182
+        }
+    }
+    
+    info_call = rule_infos.find(_ => _.is_hovering)?.info
 
     drag.update(delta)
 }
@@ -529,7 +659,7 @@ function pp_fen() {
 }
 
 function cursor_box(cursor: XY): XYWH {
-    return [cursor[0] + 6, cursor[1] + 6, 6, 6]
+    return [cursor[0] + 1, cursor[1] + 1, 6, 6]
 }
 
 function pp_box(p: PieceOnPos): XYWH {
@@ -555,6 +685,18 @@ function make_pp(piece: Pieces, pos: XY) {
     }
 }
 
+type RuleRender = XYWH
+type RuleInfo = {
+    info: [string, string],
+    bb: XYWH,
+    is_hovering: boolean
+}
+
+let is_dirty_rule_render: boolean
+let rule_renders: RuleRender[]
+
+let rule_infos: RuleInfo[]
+
 let drag_hp: PieceOnPos | undefined
 let pp: PieceOnPos[]
 
@@ -570,7 +712,14 @@ let goals: FEN[] = [
 
 const goal_attacks = () => mor_short(goals[i_goal])
 
+let info_call: [string, string] | undefined
+
 function _init() {
+    info_call = undefined
+
+    is_dirty_rule_render = true
+    rule_renders = []
+    rule_infos = []
 
     i_goal = 0
 
