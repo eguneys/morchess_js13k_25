@@ -12,6 +12,15 @@ export function mor_short(fen: FEN) {
     return s_attack_pieces(cx)
 }
 
+export const zero_attacked_by_lower = (a: AttackPiece) => !a.attacked_by.find(_ => _.toLowerCase() === _)
+    && !a.blocked_attacked_by.find(_ => _[0].toLowerCase() === _[0])
+    && !a.blocks.find(_ => _[0].toLowerCase() === _[0])
+export const zero_attacked_by_upper = (a: AttackPiece) => !a.attacked_by.find(_ => _.toLowerCase() !== _)
+    && !a.blocked_attacked_by.find(_ => _[0].toLowerCase() !== _[0])
+    && !a.blocks.find(_ => _[0].toLowerCase() !== _[0])
+
+
+
 export function print_a_piece(a: AttackPiece) {
 
     const attacks_str = (s: Pieces) => `+${s}`
@@ -22,13 +31,6 @@ export function print_a_piece(a: AttackPiece) {
 
     let p1 = a.p1
 
-    let zero_attacked_by_lower = !a.attacked_by.find(_ => _.toLowerCase() === _)
-        && !a.blocked_attacked_by.find(_ => _[0].toLowerCase() === _[0])
-        && !a.blocks.find(_ => _[0].toLowerCase() === _[0])
-    let zero_attacked_by_upper = !a.attacked_by.find(_ => _.toLowerCase() !== _) 
-        && !a.blocked_attacked_by.find(_ => _[0].toLowerCase() !== _[0])
-        && !a.blocks.find(_ => _[0].toLowerCase() !== _[0])
-
     let attacks = a.attacks.map(attacks_str).join(' ')
     let attacked_by = a.attacked_by.map(attacked_by_str).join(' ')
     let blocks = a.blocks.map(blocks_str).join(' ')
@@ -37,10 +39,10 @@ export function print_a_piece(a: AttackPiece) {
 
     let res = [p1]
 
-    if (zero_attacked_by_lower) {
+    if (zero_attacked_by_lower(a)) {
         res.push('z+')
     }
-    if (zero_attacked_by_upper) {
+    if (zero_attacked_by_upper(a)) {
         res.push('Z+')
     }
 
@@ -71,7 +73,7 @@ export function print_a_piece(a: AttackPiece) {
 
 type AttackLine = [Pieces, Pieces] | [Pieces, Pieces, Pieces]
 
-type AttackPiece = {
+export type AttackPiece = {
     p1: Pieces
     attacks: Pieces[]
     attacked_by: Pieces[]
