@@ -25,6 +25,7 @@ export default defineConfig({
     assetsInlineLimit: 0,
     target: 'esnext',
     minify: 'terser',
+    /*
     terserOptions: {
       mangle: {
         module: true,
@@ -35,6 +36,7 @@ export default defineConfig({
         },
       },
     },
+    */
     modulePreload: {
       polyfill: false,
     },
