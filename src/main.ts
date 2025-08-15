@@ -527,6 +527,10 @@ const infos: Record<string, any> = {
     well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click next to continue.'],
     well_next_chapter: ['Good job, you finished a chapter. And, there\'s more', 'Click next to continue.'],
     well_end: ['chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
+    equals(matched: boolean) {
+        let has_matched = matched ? 'has matched' : 'has not been matched yet.'
+        return ['left side is the goal, right side is the board; your goal is to match them equal.', `this rule ${has_matched}`]
+    },
     no_piece(piece: Pieces) {
         let p1 = pretty_piece(piece)
         return [`${p1} hasn't been placed yet.`, '']
@@ -724,6 +728,7 @@ function _update(delta: number) {
             all_matched = all_matched && s_match === 30
 
             build_render_spr(s_match, x + 4, y + 4)
+            build_render_info(infos['equals'](s_match === 30), x + 2, y + 2, 12, 12, [], [], [])
 
             x += 10
 
