@@ -96,11 +96,11 @@ function render_info(text: [string, string]) {
     let sx = 1920 / 320
     let sy = 1080 / 160
     fx.font = '42px Arial'
-    let x = 184 * sx
+    let x = 218 * sx
     let y = 119 * sy
     wrap_text_fx(text[0], x, y, 600, 60)
     fx.font = '28px Arial'
-    x = 184 * sx
+    x = 218 * sx
     y = 154 * sy
     wrap_text_fx(text[1], x, y, 600, 60)
 }
@@ -174,7 +174,7 @@ function _render() {
         }
     }
 
-    spr(111, 270, 188, 20, 10) 
+    spr(111, 318, 188, 20, 10) 
 
     if (info_end) {
         render_info(info_end)
@@ -216,22 +216,56 @@ function _render() {
         spr(piece_to_i(drag_hp.piece), ...drag_hp.pos, 3)
     }
 
-
     if (info_well !== undefined) {
         let hover_y = is_hovering_next && t_flash % 500 < 200 ? 2 : 0
-        sspr8(119, 5, 350, 246 + hover_y)
-
-        if (is_hovering_next && t_flash % 500 < 200) {
-            spr(123, 430, 246 + hover_y, 2)
-        }
+        sspr8(119, 5, 400, 246 + hover_y)
     }
 
+
+    render_nav()
+
+
     spr(28, ...cursor)
+
+    if (is_game_over) {
+
+        let wiggle = Math.sin(t_flash * 0.008) * 80
+        let wiggle_y1 = Math.sin(t_flash * 0.008) * 80
+        let wiggle_y2 = Math.sin(t_flash * 0.003) * 80
+
+        fx.font = 'bold 180px Arial'
+        fx.fillText('Mor', 200 + wiggle, 400 + wiggle_y1)
+        fx.fillText('Chess', 1000 - wiggle, 400 + wiggle_y1)
+
+
+        fx.fillText('Black', 200, 800 - wiggle_y2 * 0.1)
+        fx.fillText('Cat', 800, 800 - wiggle_y2 * 0.1)
+    }
 }
 
+function render_nav() {
+    let sx = scale_x
+    let sy = scale_y
+    spr(111, 238, 188, 9.8, 10) 
+
+    let level = levels[i_level]
+    fx.font = 'bold 64px Arial'
+    fx.fillText(`${level.chapter}-${level.level}`, 265 * sx, 204 * sy)
+
+    let edge = t_flash % 500 < 250 ? 3 : 0
+    let left_edge = is_hovering_left ? edge : 0
+    let right_edge = is_hovering_right ? edge : 0
+
+    spr(117, 242 - left_edge, 190, 2)
+    spr(118, 296 + right_edge, 190, 2)
+}
+
+const left_box: XYWH = [242, 190, 16, 16]
+const right_box: XYWH = [296, 190, 16, 16]
+
+const scale_x = 1920 / 480
+const scale_y = 1080 / 270
 function s_line(a: XY, b: XY, color: string) {
-    const scale_x = 1920 / 480
-    const scale_y = 1080 / 270
     fx.lineWidth = 10
     fx.strokeStyle = color
     fx.lineCap = 'round'
@@ -241,7 +275,7 @@ function s_line(a: XY, b: XY, color: string) {
     fx.stroke()
 }
 
-const next_box: XYWH = [350, 246, 80, 16]
+const next_box: XYWH = [400, 246, 80, 16]
 
 function aa_match(a: AttackPiece, b: AttackPiece) {
 
@@ -520,11 +554,11 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
 }
 
 const infos: Record<string, any> = {
-    welcome: ['welcome to mor chess; drag pieces onto the board, but there are some rules above. hover over them for details.', 'drag off of the board to remove a piece.'],
-    welcome1: ['chess tactics; are born out of relationships.', 'entangle them is our job.'],
+    welcome0: ['welcome to mor chess; drag pieces onto the board, but there are some rules above. hover over them for details.', 'drag off of the board to remove a piece.'],
+    welcome1: ['each chapter; introduces a position progressively by revealing more of it\'s pieces', 'to keep your memory fresh.'],
+    welcome2: ['chess tactics; are born out of relationships.', 'entangle them is our job.'],
     well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click Next to continue.'],
-    well_next_chapter: ['Good job, you finished a chapter. And, there\'s more', 'Click Next to continue.'],
-    well_end: ['chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
+    well_end: ['the end; chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
     equals(matched: boolean) {
         let has_matched = matched ? 'has matched correctly.' : 'has not been matched yet.'
         return ['left side is the goal, right side is the board; your goal is to match them equal.', `this rule ${has_matched}`]
@@ -649,6 +683,9 @@ function _update(delta: number) {
 
 
         is_hovering_next = info_well !== undefined && box_intersect(next_box, cursor_box(cursor))
+
+        is_hovering_left = box_intersect(left_box, cursor_box(cursor))
+        is_hovering_right = box_intersect(right_box, cursor_box(cursor))
     }
 
     if (drag.is_just_down) {
@@ -690,16 +727,15 @@ function _update(delta: number) {
 
 
         if (is_hovering_next) {
-            i_goal += 1
-            is_dirty_rule_render = true
-            info_well = undefined
+            
+            go_nav(0)
+        }
 
-            if (goal_attacks() === undefined) {
-                i_chapter += 1
-                reset_pp()
-
-                info_welcome = infos['welcome' + i_chapter]
-            }
+        if (is_hovering_left) {
+            go_nav(-1)
+        }
+        if (is_hovering_right) {
+            go_nav(1)
         }
     }
 
@@ -708,7 +744,7 @@ function _update(delta: number) {
         rule_renders = []
         rule_infos = []
 
-        let ga = goal_attacks() ?? []
+        let ga = goal_attacks()
 
         let pa = pp_attacks()
 
@@ -741,14 +777,8 @@ function _update(delta: number) {
             x = 182
         }
 
-        if (ga.length === 0) {
-            if (i_chapter === nb_chapters) {
-                info_end = infos['well_end']
-            } else {
-                info_well = infos['well_next_chapter']
-            }
-        } else if (all_matched) {
-            info_well = infos['well_done']
+        if (all_matched) {
+            go_solved()
         } else {
             info_well = undefined
         }
@@ -757,6 +787,58 @@ function _update(delta: number) {
     info_call = rule_infos.find(_ => _.is_hovering)?.info
 
     drag.update(delta)
+
+    if (is_game_over) {
+        for (let p of pp) {
+            p.pos[1] -= delta * 0.1 * Math.random()
+            if (p.pos[1] < -20) {
+                p.pos[1] = 400
+            }
+        }
+    }
+
+}
+
+function go_solved() {
+    levels[i_level].is_solved = true
+    if (i_level < levels.length - 1) {
+        if (levels.findIndex(_ => !_.is_solved) === -1) {
+            is_game_over = true
+        } else {
+            info_well = infos['well_done']
+        }
+    } else {
+        if (levels.findIndex(_ => !_.is_solved) === -1) {
+            is_game_over = true
+        } else {
+            info_well = infos['well_end']
+        }
+    }
+}
+
+function go_nav(delta: number) {
+
+    let next_level = i_level + delta
+    if (delta === 0) {
+        next_level = levels.findIndex(_ => !_.is_solved)
+    }
+
+    if (next_level < 0 || next_level >= levels.length) {
+        return
+    }
+
+    let is_next_chapter = levels[next_level].chapter !== levels[i_level].chapter
+
+    if (is_next_chapter) {
+        reset_pp()
+    }
+
+    is_dirty_rule_render = true
+    i_level = next_level
+
+    if (is_next_chapter) {
+        info_welcome = infos[`welcome${levels[i_level].chapter}`]
+    }
 }
 
 function pp_fix_twos() {
@@ -923,29 +1005,44 @@ let pp: PieceOnPos[]
 let drag: DragHandler
 let cursor: XY
 
-let i_goal: number
-let i_chapter: number
+type Level = {
+    chapter: number,
+    level: number,
+    fen: FEN,
+    is_solved: boolean
+}
 
-let goals: (FEN | undefined)[] = [
-    "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
-    "8/5k2/8/8/8/8/6PP/6K1 w - - 0 1",
-    "8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1",
-    "8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1",
-    "3r4/5k2/8/8/3n4/8/8/3R2K1 w - - 0 1",
-    "3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1",
-    "3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1",
-    "3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1",
-    undefined,
-    "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
+let levels = [
+    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 0, 0),
+    /*
+    level_fen("8/5k2/8/8/8/8/6PP/6K1 w - - 0 1", 0, 1),
+    level_fen("8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1", 0, 2),
+    level_fen("8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1", 0, 3),
+    level_fen("3r4/5k2/8/8/3n4/8/8/3R2K1 w - - 0 1", 0, 4),
+    level_fen("3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1", 0, 5),
+    level_fen("3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1", 0, 6),
+    level_fen("3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1", 0, 7),
+    */
+
+    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 0),
+    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 1),
+    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 2, 0),
 ]
 
-const nb_chapters = goals.filter(_ => _ === undefined).length
+let i_level: number
+
+
+function level_fen(fen: FEN, chapter: number, level: number): Level {
+    return {
+        chapter,
+        level,
+        fen,
+        is_solved: false
+    }
+}
 
 const goal_attacks = () => {
-    let res = goals[i_goal]
-    if (res) {
-        return short_short(res)
-    }
+    return short_short(levels[i_level].fen)
 }
 
 let info_welcome: [string, string]
@@ -957,20 +1054,29 @@ let t_flash: number
 
 let is_hovering_next: boolean
 
+let is_hovering_left: boolean
+let is_hovering_right: boolean
+
+let is_game_over: boolean
+
 function _init() {
+
+    is_game_over = false
+
+    is_hovering_left = false
+    is_hovering_right = false
     is_hovering_next = false
     t_flash = 0
     info_end = undefined
     info_well = undefined
     info_call = undefined
-    info_welcome = infos['welcome']
+    info_welcome = infos['welcome0']
 
     is_dirty_rule_render = true
     rule_renders = []
     rule_infos = []
 
-    i_goal = 0
-    i_chapter = 0
+    i_level = 0
 
     drag_hp = undefined
 
