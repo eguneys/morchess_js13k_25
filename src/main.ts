@@ -193,6 +193,19 @@ function _render() {
     if (ih) {
         let [x, y, w, h] = ih.bb
         cx.strokeRect(x, y, w, h)
+
+
+        for (let xy of ih.circles) {
+            spr(112, ...xy, 3)
+        }
+
+        for (let ab of ih.no_arrows) {
+            s_line(ab[0], ab[1], 'red')
+        }
+        for (let ab of ih.yes_arrows) {
+            s_line(ab[0], ab[1], 'green')
+        }
+
     }
 
     for (let rr of rule_renders) {
@@ -214,6 +227,18 @@ function _render() {
     }
 
     spr(28, ...cursor)
+}
+
+function s_line(a: XY, b: XY, color: string) {
+    const scale_x = 1920 / 480
+    const scale_y = 1080 / 270
+    fx.lineWidth = 10
+    fx.strokeStyle = color
+    fx.lineCap = 'round'
+    fx.beginPath()
+    fx.moveTo(a[0] * scale_x, a[1] * scale_y)
+    fx.lineTo(b[0] * scale_x, b[1] * scale_y)
+    fx.stroke()
 }
 
 const next_box: XYWH = [260, 166, 80, 16]
@@ -270,22 +295,49 @@ function aa_match(a: AttackPiece, b: AttackPiece) {
 }
 
 const build_render_spr = (i: number, x: number, y: number) => rule_renders.push([i, x, y, 0])
-const build_render_info = (info: [string, string], x: number, y: number, w: number, h: number) => rule_infos.push({
+const build_render_info = (info: [string, string], x: number, y: number, w: number, h: number, circles: XY[], yes_arrows: [XY, XY][], no_arrows: [XY, XY][]) => rule_infos.push({
     info,
     bb: [x, y, w, h],
-    is_hovering: false
+    is_hovering: false,
+    circles,
+    yes_arrows,
+    no_arrows
 })
 
 
 
 function build_render_a(a: AttackPiece, x: number, y: number) {
+
+    const find_circle_for_p = (p: Pieces) =>  pp.filter(_ => _.piece === p && pos2board_file_rank(_.pos) !== undefined).map(_ => _.pos)
+    const find_arrow_for_pq = (p: Pieces, q: Pieces) => {
+        let a = pp.filter(_ => _.piece === p && pos2board_file_rank(_.pos) !== undefined).map(_ => _.pos)[0]
+        let b = pp.filter(_ => _.piece === q && pos2board_file_rank(_.pos) !== undefined).map(_ => _.pos)[0]
+        if (a && b) {
+            let res: [XY, XY] = [[a[0] + 1.5 * 8, a[1] + 1.5 * 8], [b[0] + 1.5 * 8, b[1] + 1.5 * 8]]
+            return [res]
+        }
+        return []
+    }
+
+
+    let circles: XY[] = []
+    let yes_arrows: [XY, XY][] = []
+    let no_arrows: [XY, XY][] = []
+
+    const ipr = (info: [string, string], x: number, y: number, w: number, h: number) => {
+        build_render_info(info, x, y, w, h, circles, yes_arrows, no_arrows)
+        circles = []
+        yes_arrows = []
+        no_arrows = []
+    }
+
     const spr = build_render_spr
-    const ipr = build_render_info
 
         spr(piece_to_i(a.p1), x + 4, y + 4)
         if (a.p1.match(/2/)) {
             spr(82, x + 4, y + 4)
         }
+        circles = find_circle_for_p(a.p1)
         ipr(infos.yes_piece(a.p1), x + 2, y + 2, 12, 12)
 
 
@@ -294,16 +346,39 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
         spr(39, x + 4, y + 4)
         x += 8
 
-        if (zero_attacked_by_lower(a)) {
-            spr(32, x + 4, y + 4)
+        let aaa = pp_attacks()
 
+        if (zero_attacked_by_lower(a)) {
+
+            let aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = aa?.attacked_by.filter(_ => _.toLowerCase() === _) ?? []
+            no_arrows = [...abb.flatMap(b => find_arrow_for_pq(a.p1, b))]
+            if (a.p1.toLowerCase() === a.p1) {
+                spr(33, x + 4, y + 4)
+
+            } else {
+                spr(32, x + 4, y + 4)
+            }
+
+            circles = find_circle_for_p(a.p1)
             ipr(infos.zero_attacked_by_lower(a.p1), x + 2, y + 2, 12, 12)
 
             x += 10
         }
-        if (zero_attacked_by_upper(a)) {
-            spr(33, x + 4, y + 4)
 
+        if (zero_attacked_by_upper(a)) {
+            let aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = aa?.attacked_by.filter(_ => _.toLowerCase() !== _) ?? []
+            no_arrows = [...abb.flatMap(b => find_arrow_for_pq(a.p1, b))]
+            if (a.p1.toLowerCase() === a.p1) {
+                spr(32, x + 4, y + 4)
+
+            } else {
+                spr(33, x + 4, y + 4)
+            }
+
+
+            circles = find_circle_for_p(a.p1)
             ipr(infos.zero_attacked_by_upper(a.p1), x + 2, y + 2, 12, 12)
             x += 10
         }
@@ -311,6 +386,15 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
         for (let aa of a.attacks) {
 
             spr(35, x + 2, y+ 4)
+
+            let _aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = _aa?.attacks.filter(_ => _ === aa) ?? []
+            if (abb.length === 0) {
+                no_arrows = [...find_arrow_for_pq(a.p1, aa)]
+            } else {
+                yes_arrows = [...find_arrow_for_pq(a.p1, aa)]
+            }
+
 
             ipr(infos.attacks(a.p1, aa), x + 4, y + 2, 14, 12)
             x += 5
@@ -329,6 +413,17 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
                 spr(82, x + 4, y + 4)
             }
 
+            let _aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = _aa?.attacked_by.filter(_ => _ === aa) ?? []
+            if (abb.length === 0) {
+                no_arrows = [...find_arrow_for_pq(a.p1, aa)]
+            } else {
+                yes_arrows = [...find_arrow_for_pq(a.p1, aa)]
+            }
+
+
+
+            circles = find_circle_for_p(a.p1)
             ipr(infos.attacked_by(a.p1, aa), x + 4, y + 2, 14, 12)
             x += 5 + 4
             spr(34, x + 2, y+ 4)
@@ -599,7 +694,7 @@ function _update(delta: number) {
 
             if (a2 === undefined) {
                 build_render_spr(31, x + 4, y + 4)
-                build_render_info(infos['no_piece'](a.p1), x + 2, y + 2, 12, 12)
+                build_render_info(infos['no_piece'](a.p1), x + 2, y + 2, 12, 12, [], [], [])
             } else {
                 ;[x, y] = build_render_a(a2, x, y)
             }
@@ -774,6 +869,9 @@ type RuleInfo = {
     info: [string, string],
     bb: XYWH,
     is_hovering: boolean
+    circles: XY[],
+    yes_arrows: [XY, XY][]
+    no_arrows: [XY, XY][]
 }
 
 let is_dirty_rule_render: boolean
@@ -791,7 +889,7 @@ let i_goal: number
 let i_chapter: number
 
 let goals: (FEN | undefined)[] = [
-    "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
+    //"5k2/8/8/8/8/8/8/4K3 w - - 0 1",
     "8/5k2/8/8/8/8/6PP/6K1 w - - 0 1",
     "8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1",
     "8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1",
@@ -864,6 +962,9 @@ function reset_pp() {
         make_pp('R', [off_x + gap * 3, off_y2 + 0]),
         make_pp('Q', [off_x + gap * 4, off_y2 + 0]),
         make_pp('K', [off_x + gap * 5, off_y2 + 0]),
+        make_pp('k', pos_from_fr([2, 2])),
+        make_pp('b', pos_from_fr([3, 3])),
+        make_pp('K', pos_from_fr([5, 5])),
     ]
 
 
