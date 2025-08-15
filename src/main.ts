@@ -10,7 +10,7 @@ import { mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_att
 import type { Square } from './chess/types'
 import { squareFromCoords } from './chess/util'
 
-console.log(mor_short("8/8/4r3/8/8/4P3/4K3/8 w - - 0 1").map(print_a_piece))
+console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print_a_piece))
 
 if (false) { 
     play_music()
@@ -291,6 +291,11 @@ function s_line(a: XY, b: XY, color: string) {
 const next_box: XYWH = [400, 246, 80, 16]
 
 function aa_match(a: AttackPiece, b: AttackPiece) {
+    return print_a_piece(a) === print_a_piece(b)
+}
+
+/*
+function aa_match_old(a: AttackPiece, b: AttackPiece) {
 
     if (a.p1 !== b.p1) {
         return false
@@ -340,6 +345,7 @@ function aa_match(a: AttackPiece, b: AttackPiece) {
 
     return true
 }
+    */
 
 const build_render_spr = (i: number, x: number, y: number) => rule_renders.push([i, x, y, 0])
 const build_render_info = (info: [string, string], x: number, y: number, w: number, h: number, circles: XY[], yes_arrows: [XY, XY][], no_arrows: [XY, XY][]) => rule_infos.push({
@@ -808,6 +814,14 @@ function _update(delta: number) {
                 p.pos[1] = 400
             }
         }
+
+        if (t_flash % 500 < 17) {
+            i_level += 1
+            if (i_level > levels.length - 1) {
+                i_level = 0
+            }
+            is_dirty_rule_render = true
+        }
     }
 
 }
@@ -1027,7 +1041,6 @@ type Level = {
 
 let levels = [
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 0, 0),
-    /*
     level_fen("8/5k2/8/8/8/8/6PP/6K1 w - - 0 1", 0, 1),
     level_fen("8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1", 0, 2),
     level_fen("8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1", 0, 3),
@@ -1035,7 +1048,6 @@ let levels = [
     level_fen("3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1", 0, 5),
     level_fen("3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1", 0, 6),
     level_fen("3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1", 0, 7),
-    */
 
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 0),
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 1),
