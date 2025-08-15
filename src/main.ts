@@ -58,6 +58,12 @@ function init_text() {
     fx = f.getContext('2d')!
 }
 
+function sspr8(s: number, ii: number, x: number, y: number) {
+    for (let i = 0; i < ii; i++) {
+        spr(s + i, x + i * 8 * 2, y, 2)
+    }
+}
+
 function spr(i: number, x: number, y: number, scale_x = 1, scale_y = scale_x) {
 
     x = Math.floor(x)
@@ -170,10 +176,14 @@ function _render() {
 
     spr(111, 270, 188, 20, 10) 
 
-    if (info_call) {
+    if (info_end) {
+        render_info(info_end)
+    } else if (info_well) {
+        render_info(info_well)
+    } else if (info_call) {
         render_info(info_call)
     } else {
-        render_info(infos['welcome'])
+        render_info(info_welcome)
     }
 
 
@@ -193,8 +203,20 @@ function _render() {
         spr(piece_to_i(drag_hp.piece), ...drag_hp.pos, 3)
     }
 
+
+    if (info_well !== undefined) {
+        let hover_y = is_hovering_next && t_flash % 500 < 200 ? 2 : 0
+        sspr8(119, 5, 260, 166 + hover_y)
+
+        if (is_hovering_next && t_flash % 500 < 200) {
+            spr(123, 340, 166 + hover_y, 2)
+        }
+    }
+
     spr(28, ...cursor)
 }
+
+const next_box: XYWH = [260, 166, 80, 16]
 
 function aa_match(a: AttackPiece, b: AttackPiece) {
 
@@ -371,6 +393,10 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
 
 const infos: Record<string, any> = {
     welcome: ['welcome to mor chess; drag pieces on to the board, but there are some rules.', 'drag out of the board to remove a piece.'],
+    welcome1: ['chess tactics; are born out of relationships.', 'entangle them is our job.'],
+    well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click next to continue.'],
+    well_next_chapter: ['Good job, you finished a chapter. And, there\'s more', 'Click next to continue.'],
+    well_end: ['chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
     no_piece(piece: Pieces) {
         let p1 = pretty_piece(piece)
         return [`${p1} hasn't been placed yet.`, '']
@@ -457,6 +483,8 @@ function piece_to_i(p: Pieces) {
 
 function _update(delta: number) {
 
+    t_flash += delta
+
     if (drag.is_hovering) {
         cursor = drag.is_hovering
 
@@ -486,6 +514,9 @@ function _update(delta: number) {
             }
 
         }
+
+
+        is_hovering_next = info_well !== undefined && box_intersect(next_box, cursor_box(cursor))
     }
 
     if (drag.is_just_down) {
@@ -519,10 +550,24 @@ function _update(delta: number) {
 
                 pp_fix_twos()
 
-                is_dirty_rule_render = true
             }
 
             drag_hp = undefined
+            is_dirty_rule_render = true
+        }
+
+
+        if (is_hovering_next) {
+            i_goal += 1
+            is_dirty_rule_render = true
+            info_well = undefined
+
+            if (goal_attacks() === undefined) {
+                i_chapter += 1
+                reset_pp()
+
+                info_welcome = infos['welcome' + i_chapter]
+            }
         }
     }
 
@@ -531,11 +576,11 @@ function _update(delta: number) {
         rule_renders = []
         rule_infos = []
 
-        let ga = goal_attacks()
+        let ga = goal_attacks() ?? []
 
         let pa = pp_attacks()
 
-
+        let all_matched = true
         let y = 2
         for (let a of ga) {
             let x = 238
@@ -545,6 +590,8 @@ function _update(delta: number) {
             let a2 = pa.find(_ => _.p1 === a.p1)
 
             let s_match = a2 === undefined || !aa_match(a, a2) ? 29 : 30
+
+            all_matched = all_matched && s_match === 30
 
             build_render_spr(s_match, x + 4, y + 4)
 
@@ -559,6 +606,18 @@ function _update(delta: number) {
 
             y += 12
             x = 182
+        }
+
+        if (ga.length === 0) {
+            if (i_chapter === nb_chapters) {
+                info_end = infos['well_end']
+            } else {
+                info_well = infos['well_next_chapter']
+            }
+        } else if (all_matched) {
+            info_well = infos['well_done']
+        } else {
+            info_well = undefined
         }
     }
     
@@ -729,28 +788,57 @@ let drag: DragHandler
 let cursor: XY
 
 let i_goal: number
+let i_chapter: number
 
-let goals: FEN[] = [
+let goals: (FEN | undefined)[] = [
+    "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
     "3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1",
+    undefined,
     "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
 ]
 
-const goal_attacks = () => short_short(goals[i_goal])
+const nb_chapters = goals.filter(_ => _ === undefined).length
 
+const goal_attacks = () => {
+    let res = goals[i_goal]
+    if (res) {
+        return short_short(res)
+    }
+}
+
+let info_welcome: [string, string]
+let info_well: [string, string] | undefined
 let info_call: [string, string] | undefined
+let info_end: [string, string] | undefined
+
+let t_flash: number
+
+let is_hovering_next: boolean
 
 function _init() {
+    is_hovering_next = false
+    t_flash = 0
+    info_end = undefined
+    info_well = undefined
     info_call = undefined
+    info_welcome = infos['welcome']
 
     is_dirty_rule_render = true
     rule_renders = []
     rule_infos = []
 
     i_goal = 0
-
-    console.log(goal_attacks())
+    i_chapter = 0
 
     drag_hp = undefined
+
+    pp = []
+    reset_pp()
+    drag = DragHandler(c)
+    cursor = [0, 0]
+}
+
+function reset_pp() {
 
     let off_x = 20
     let off_y = 0
@@ -772,10 +860,8 @@ function _init() {
         make_pp('K', [off_x + gap * 5, off_y2 + 0]),
     ]
 
-    drag = DragHandler(c)
-    cursor = [0, 0]
-}
 
+}
 
 function main(el: HTMLElement) {
 
