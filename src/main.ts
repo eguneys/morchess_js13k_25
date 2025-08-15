@@ -6,11 +6,11 @@ import play_music from './play_music'
 import { box_intersect, type XY, type XYWH } from './util'
 //import './play_sounds'
 
-import { mor_short, parse_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
+import { mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
 import type { Square } from './chess/types'
 import { squareFromCoords } from './chess/util'
 
-//console.log(mor_short("3r4/p1p2kpp/4rn2/1p6/2N1P3/3n1P2/PB4PP/R2R2K1").map(print_a_piece))
+console.log(mor_short("8/8/4r3/8/8/4P3/4K3/8 w - - 0 1").map(print_a_piece))
 
 if (false) { 
     play_music()
@@ -352,7 +352,9 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
 
             let aa = aaa.find(_ => _.p1 === a.p1)
             let abb = aa?.attacked_by.filter(_ => _.toLowerCase() === _) ?? []
+            abb = abb.concat(aa?.blocks.map(_ => _[0]).filter(_ => _.toLowerCase() === _) ?? [])
             no_arrows = [...abb.flatMap(b => find_arrow_for_pq(a.p1, b))]
+
             if (a.p1.toLowerCase() === a.p1) {
                 spr(33, x + 4, y + 4)
 
@@ -369,6 +371,7 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
         if (zero_attacked_by_upper(a)) {
             let aa = aaa.find(_ => _.p1 === a.p1)
             let abb = aa?.attacked_by.filter(_ => _.toLowerCase() !== _) ?? []
+            abb = abb.concat(aa?.blocks.map(_ => _[0]).filter(_ => _.toLowerCase() !== _) ?? [])
             no_arrows = [...abb.flatMap(b => find_arrow_for_pq(a.p1, b))]
             if (a.p1.toLowerCase() === a.p1) {
                 spr(32, x + 4, y + 4)
@@ -437,6 +440,16 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
                 spr(82, x + 4, y + 4)
             }
 
+            let _aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = _aa?.blocks.filter(_ => _[0] === bb[0] && _[1] === bb[1]) ?? []
+            if (abb.length === 0) {
+                no_arrows = [...find_arrow_for_pq(bb[0], bb[1]), ...find_arrow_for_pq(a.p1, bb[1])]
+            } else {
+                yes_arrows = [...find_arrow_for_pq(bb[0], bb[1])]
+            }
+
+
+
             ipr(infos.blocks(a.p1, ...bb), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(36, x + 2, y + 4)
@@ -454,6 +467,17 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
             if (bb[0].match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
+
+            let _aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = _aa?.blocked_attacks.filter(_ => _[0] === bb[0] && _[1] === bb[1]) ?? []
+            if (abb.length === 0) {
+                no_arrows = [...find_arrow_for_pq(bb[0], bb[1]), ...find_arrow_for_pq(a.p1, bb[1])]
+            } else {
+                yes_arrows = [...find_arrow_for_pq(a.p1, bb[1])]
+            }
+
+
+
             ipr(infos.blocked_attacks(a.p1, bb[1], bb[0]), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(37, x + 2, y + 4)
@@ -470,7 +494,18 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
             if (bb[1].match(/2/)) {
                 spr(82, x + 4, y + 4)
             }
-            ipr(infos.blocked_attacked_by(a.p1, bb[1], bb[0]), x + 4, y + 2, 24, 12)
+
+
+            let _aa = aaa.find(_ => _.p1 === a.p1)
+            let abb = _aa?.blocked_attacked_by.filter(_ => _[0] === bb[0] && _[1] === bb[1]) ?? []
+            if (abb.length === 0) {
+                no_arrows = [...find_arrow_for_pq(bb[0], bb[1]), ...find_arrow_for_pq(a.p1, bb[1])]
+            } else {
+                yes_arrows = [...find_arrow_for_pq(a.p1, bb[0])]
+            }
+
+
+            ipr(infos.blocked_attacked_by(a.p1, bb[0], bb[1]), x + 4, y + 2, 24, 12)
             x += 5 + 4
             spr(38, x + 2, y + 4)
             x += 5
@@ -538,14 +573,14 @@ const infos: Record<string, any> = {
         let a1 = pretty_piece(a)
         let b1 = pretty_piece(b)
 
-        return [`${p1} is ${attacking(piece, a)} ${a1}, blocked by ${b1}.`, ``]
+        return [`${p1} is ${attacking(piece, a)} ${a1}, but that's blocked by ${b1}.`, ``]
     },
     blocked_attacked_by(piece: Pieces, a: Pieces, b: Pieces) {
         let p1 = pretty_piece(piece)
         let a1 = pretty_piece(a)
         let b1 = pretty_piece(b)
 
-        return [`${p1} is ${attacked(piece, a)} by ${a1}, blocked by ${b1}.`, ``]
+        return [`${p1} is ${attacked(piece, a)} by ${a1}, but that's blocked by ${b1}.`, ``]
     }
 }
 
@@ -889,7 +924,7 @@ let i_goal: number
 let i_chapter: number
 
 let goals: (FEN | undefined)[] = [
-    //"5k2/8/8/8/8/8/8/4K3 w - - 0 1",
+    "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
     "8/5k2/8/8/8/8/6PP/6K1 w - - 0 1",
     "8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1",
     "8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1",
@@ -962,9 +997,11 @@ function reset_pp() {
         make_pp('R', [off_x + gap * 3, off_y2 + 0]),
         make_pp('Q', [off_x + gap * 4, off_y2 + 0]),
         make_pp('K', [off_x + gap * 5, off_y2 + 0]),
+        /*
         make_pp('k', pos_from_fr([2, 2])),
         make_pp('b', pos_from_fr([3, 3])),
         make_pp('K', pos_from_fr([5, 5])),
+        */
     ]
 
 
