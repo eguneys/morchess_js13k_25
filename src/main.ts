@@ -548,10 +548,10 @@ function _update(delta: number) {
                 pp.push(make_pp(drag_hp.piece, xy))
 
 
-                pp_fix_twos()
 
             }
 
+            pp_fix_twos()
             drag_hp = undefined
             is_dirty_rule_render = true
         }
@@ -792,6 +792,12 @@ let i_chapter: number
 
 let goals: (FEN | undefined)[] = [
     "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
+    "8/5k2/8/8/8/8/6PP/6K1 w - - 0 1",
+    "8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1",
+    "8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1",
+    "3r4/5k2/8/8/3n4/8/8/3R2K1 w - - 0 1",
+    "3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1",
+    "3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1",
     "3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1",
     undefined,
     "5k2/8/8/8/8/8/8/4K3 w - - 0 1",
