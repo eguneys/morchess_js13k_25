@@ -96,6 +96,8 @@ function render_info(text: [string, string]) {
     let sx = 1920 / 320
     let sy = 1080 / 160
     fx.font = '42px Arial'
+    fx.shadowColor = 'black'
+    fx.shadowBlur = 4
     let x = 218 * sx
     let y = 119 * sy
     wrap_text_fx(text[0], x, y, 600, 60)
@@ -234,9 +236,20 @@ function _render() {
         let wiggle_y2 = Math.sin(t_flash * 0.003) * 80
 
         fx.font = 'bold 180px Arial'
+        fx.shadowColor = 'purple'
+        fx.shadowBlur = 10
+        fx.lineWidth = 4
+        fx.strokeStyle = 'purple'
+        fx.strokeText('Mor', 200 + wiggle, 400 + wiggle_y1)
+        fx.strokeText('Chess', 1000 - wiggle, 400 + wiggle_y1)
+
+        fx.fillStyle= 'white'
+        fx.shadowBlur = 0
         fx.fillText('Mor', 200 + wiggle, 400 + wiggle_y1)
         fx.fillText('Chess', 1000 - wiggle, 400 + wiggle_y1)
 
+
+        fx.fillStyle= 'black'
 
         fx.fillText('Black', 200, 800 - wiggle_y2 * 0.1)
         fx.fillText('Cat', 800, 800 - wiggle_y2 * 0.1)
