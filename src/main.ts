@@ -6,13 +6,13 @@ import play_music from './play_music'
 import { box_intersect, type XY, type XYWH } from './util'
 //import './play_sounds'
 
-import { mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
+import { mor_short, parse_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
 import type { Square } from './chess/types'
 import { squareFromCoords } from './chess/util'
 
-console.log(mor_short("3r4/p1p2kpp/4rn2/1p6/2N1P3/3n1P2/PB4PP/R2R2K1").map(print_a_piece))
+//console.log(mor_short("3r4/p1p2kpp/4rn2/1p6/2N1P3/3n1P2/PB4PP/R2R2K1").map(print_a_piece))
 
-if (false) {
+if (false) { 
     play_music()
 }
 
