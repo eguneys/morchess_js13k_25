@@ -95,11 +95,11 @@ function spr(i: number, x: number, y: number, scale_x = 1, scale_y = scale_x) {
 function render_info(text: [string, string]) {
     let sx = 1920 / 320
     let sy = 1080 / 160
-    fx.font = '54px Arial'
+    fx.font = '42px Arial'
     let x = 184 * sx
-    let y = 122 * sy
+    let y = 119 * sy
     wrap_text_fx(text[0], x, y, 600, 60)
-    fx.font = '32px Arial'
+    fx.font = '28px Arial'
     x = 184 * sx
     y = 154 * sy
     wrap_text_fx(text[1], x, y, 600, 60)
@@ -219,10 +219,10 @@ function _render() {
 
     if (info_well !== undefined) {
         let hover_y = is_hovering_next && t_flash % 500 < 200 ? 2 : 0
-        sspr8(119, 5, 260, 166 + hover_y)
+        sspr8(119, 5, 350, 246 + hover_y)
 
         if (is_hovering_next && t_flash % 500 < 200) {
-            spr(123, 340, 166 + hover_y, 2)
+            spr(123, 430, 246 + hover_y, 2)
         }
     }
 
@@ -241,7 +241,7 @@ function s_line(a: XY, b: XY, color: string) {
     fx.stroke()
 }
 
-const next_box: XYWH = [260, 166, 80, 16]
+const next_box: XYWH = [350, 246, 80, 16]
 
 function aa_match(a: AttackPiece, b: AttackPiece) {
 
@@ -365,7 +365,7 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
             circles = find_circle_for_p(a.p1)
             ipr(infos.zero_attacked_by_lower(a.p1), x + 2, y + 2, 12, 12)
 
-            x += 10
+            x += 12
         }
 
         if (zero_attacked_by_upper(a)) {
@@ -383,7 +383,7 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
 
             circles = find_circle_for_p(a.p1)
             ipr(infos.zero_attacked_by_upper(a.p1), x + 2, y + 2, 12, 12)
-            x += 10
+            x += 12
         }
 
         for (let aa of a.attacks) {
@@ -516,19 +516,17 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
             x += 5 + 4
         }
 
-
-
         return [x, y]
 }
 
 const infos: Record<string, any> = {
-    welcome: ['welcome to mor chess; drag pieces on to the board, but there are some rules.', 'drag out of the board to remove a piece.'],
+    welcome: ['welcome to mor chess; drag pieces onto the board, but there are some rules above. hover over them for details.', 'drag off of the board to remove a piece.'],
     welcome1: ['chess tactics; are born out of relationships.', 'entangle them is our job.'],
-    well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click next to continue.'],
-    well_next_chapter: ['Good job, you finished a chapter. And, there\'s more', 'Click next to continue.'],
+    well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click Next to continue.'],
+    well_next_chapter: ['Good job, you finished a chapter. And, there\'s more', 'Click Next to continue.'],
     well_end: ['chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
     equals(matched: boolean) {
-        let has_matched = matched ? 'has matched' : 'has not been matched yet.'
+        let has_matched = matched ? 'has matched correctly.' : 'has not been matched yet.'
         return ['left side is the goal, right side is the board; your goal is to match them equal.', `this rule ${has_matched}`]
     },
     no_piece(piece: Pieces) {
@@ -739,7 +737,7 @@ function _update(delta: number) {
                 ;[x, y] = build_render_a(a2, x, y)
             }
 
-            y += 12
+            y += 14
             x = 182
         }
 
