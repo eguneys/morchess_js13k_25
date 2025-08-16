@@ -2,7 +2,7 @@ import './style.css'
 import sprite_bg_png from '../design/sprites_with_bg_alpha_working.png'
 import { Loop } from './loop_input'
 import { DragHandler } from './drag'
-import { play_music, stop_music } from './play_music'
+import { play_music as _play_music, play_music3, play_music2, stop_music } from './play_music'
 import { box_intersect, type XY, type XYWH } from './util'
 import { play, sounds } from './play_sounds'
 
@@ -12,6 +12,31 @@ import { squareFile, squareFromCoords, squareRank } from './chess/util'
 
 console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print_a_piece))
 
+//play_music3()
+
+let music_chapter: number
+const play_music = () => {
+
+    let { chapter } = levels[i_level]
+
+    if (music_chapter === chapter) {
+        return
+    }
+
+    stop_music()
+
+    setTimeout(() => {
+
+        if (chapter === 0) {
+            _play_music()
+        } else if (chapter === 1) {
+            play_music2()
+        } else if (chapter === 2) {
+            play_music3()
+        }
+        music_chapter = chapter
+    }, 1000)
+}
 
 function load_image(src: string) {
     let image = new Image()
@@ -957,6 +982,7 @@ function go_solved() {
 }
 
 function go_nav(delta: number) {
+    play_music()
 
     if (levels[i_level].is_revealed) {
         levels[i_level].is_revealed = false
