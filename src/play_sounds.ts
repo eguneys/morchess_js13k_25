@@ -1,4 +1,4 @@
-import { generate, play, saw, sin, sqr, } from "./infernal_sfx";
+import { generate, saw, sin, sqr, } from "./infernal_sfx";
 
 const rnd = () => Math.random()
 
