@@ -100,10 +100,11 @@ let bass = [
 
   */
 
-  let lead = []
-  let harmony = []
-  let bass = []
+  let lead: string[] = []
+  let harmony: string[] = []
+  let bass: string[] = []
 
+  /*
   lead = [
     'B4 q',
     'C5 q',
@@ -170,6 +171,190 @@ let bass = [
     '- q',
     'A2 q',
   ]
+    */
+
+
+  lead = [
+
+    'G4 q',
+    'A4 q',
+    'B4 h',
+
+    'B4 h',
+    'A4 q',
+    'F#4 q',
+
+    'F#4 h',
+    'F#4 h',
+
+    'A4 h',
+    'G4 q',
+    'F#4 q',
+
+    'E4 q',
+    'D4 q',
+    'C4 q',
+    'F#4 q',
+
+    'G4 h',
+    'A4 q',
+    'B4 q',
+
+    'B4 q',
+    'B4 q',
+    'A4 h',
+
+    'B4 q',
+    'B4 q',
+    'F#4 h',
+
+    // repeat
+    'G4 q',
+    'A4 q',
+    'B4 h',
+
+    'B4 h',
+    'A4 q',
+    'F#4 q',
+
+    'F#4 h',
+    'F#4 h',
+
+    'A4 h',
+    'G4 q',
+    'F#4 q',
+
+    'E4 q',
+    'D4 q',
+    'C4 q',
+    'F#4 q',
+
+    'G4 h',
+    'A4 q',
+    'B4 q',
+
+    'B4 q',
+    'B4 q',
+    'A4 h',
+
+    'B4 q',
+    'B4 q',
+    'F#4 h',
+
+    // B
+
+    'E4 q',
+    'F#4 q',
+    'G4 h',
+
+    'G4 h',
+    'A4 q',
+    'B4 q',
+
+    'C5 q',
+    'B4 q',
+    'A4 h',
+
+    'A4 h',
+    'F#4 q',
+    'G4 q',
+
+    'E4 q',
+    'F#4 q',
+    'A4 q',
+    'G4 q',
+
+
+
+    'F#4 h',
+    'G4 q',
+    'B4 q',
+
+    'C5 h',
+    'A4 h',
+
+    'D5 q',
+    'C4 q',
+    'B3 h',
+  ]
+
+  bass = [
+    'G4 h',
+    'D4 h',
+
+    'G4 h',
+    'D4 h',
+
+    'B4 h',
+    'D4 h',
+
+    'D4 h',
+    'G4 h',
+
+    'C4 h',
+    'D4 h',
+
+    'G4 h',
+    'E4 h',
+
+    'A4 h',
+    'D4 h',
+
+    'G4 h',
+    'D4 q',
+
+    // repeat
+    'G4 h',
+    'D4 h',
+
+    'G4 h',
+    'D4 h',
+
+    'B4 h',
+    'D4 h',
+
+    'D4 h',
+    'G4 h',
+
+    'C4 h',
+    'D4 h',
+
+    'G4 h',
+    'E4 h',
+
+    'A4 h',
+    'D4 h',
+
+    'G4 h',
+    'D4 q',
+
+
+    // B
+
+    'E4 h',
+    'D4 h',
+
+    'G4 h',
+    'C4 h',
+
+    'A4 h',
+    'C4 h',
+
+    'B4 h',
+    'D4 h',
+
+    'D4 h',
+    'B4 h',
+
+    'D4 h',
+    'B4 h',
+
+    'C4 h',
+    'G4 h',
+
+    'E4 h',
+    'G4 q',
+  ]
 
   let sequence1 = new Sequence(cx, tempo, lead)
   let sequence2 = new Sequence(cx, tempo, harmony)
@@ -182,9 +367,9 @@ let bass = [
   sequence3.smoothing = 0.01
 
 
-  sequence1.gain.gain.value = 0.9
-  sequence2.gain.gain.value = 0.8 
-  sequence3.gain.gain.value = 0.44
+  sequence1.gain.gain.value = 0.07
+  sequence2.gain.gain.value = 0.06 
+  sequence3.gain.gain.value = 0.024
 
 
   // apply EQ Settings
@@ -203,12 +388,17 @@ sequence3.eqs.mid!.frequency.value = 500;
 sequence3.eqs.treble!.gain.value = -2;
 sequence3.eqs.treble!.frequency.value = 1400;
 
-export default function play_music() {
+export function play_music() {
   //start the lead part immediately
   sequence1.play(when);
   // delay the harmony by 16 beats
-  sequence2.play(when + (60 / tempo) * 16);
+  //sequence2.play(when + (60 / tempo) * 16);
   //sequence2.play(when)
   // start the bass part immediately
   sequence3.play(when);
+}
+
+export function stop_music() {
+  sequence1.stop()
+  sequence3.stop()
 }

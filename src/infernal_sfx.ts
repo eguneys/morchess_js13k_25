@@ -14,7 +14,7 @@ export async function generate(duration: number, fn: (i: number) => number) {
     let buffer = audioBuffer.getChannelData(0);
     let N = audioBuffer.length;
     for (let i = 0; i < N; i++) {
-        buffer[i] = fn(i * 44100 / sampleRate) * (1 - i / N);
+        buffer[i] = fn(i * 44100 / sampleRate) * (1 - i / N) * 0.4;
     }
     await _yield()
     return audioBuffer;

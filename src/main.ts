@@ -2,9 +2,9 @@ import './style.css'
 import sprite_bg_png from '../design/sprites_with_bg_alpha_working.png'
 import { Loop } from './loop_input'
 import { DragHandler } from './drag'
-import play_music from './play_music'
+import { play_music, stop_music } from './play_music'
 import { box_intersect, type XY, type XYWH } from './util'
-//import './play_sounds'
+import { play, sounds } from './play_sounds'
 
 import { mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
 import type { Square } from './chess/types'
@@ -12,9 +12,6 @@ import { squareFromCoords } from './chess/util'
 
 console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print_a_piece))
 
-if (false) { 
-    play_music()
-}
 
 function load_image(src: string) {
     let image = new Image()
@@ -271,7 +268,28 @@ function render_nav() {
 
     spr(117, 242 - left_edge, 190, 2)
     spr(118, 296 + right_edge, 190, 2)
+
+
+    spr(i_expr + (levels[i_level].is_solved ? 8 : 0), 250, 214, 3)
+
+    spr(is_muted === undefined || is_muted ? 116 : 115, 298, 214, 2)
 }
+
+let audio_box: XYWH = [298, 214, 16, 16]
+
+let nb_matched0: number
+let t_neutral: number
+let i_expr: number
+
+const Exprs = {
+    neutral: 4,
+    happy: 5,
+    sad: 6,
+    angry: 7,
+    surprised: 8,
+    sleepy: 9,
+    playful: 10,
+} as const;
 
 const left_box: XYWH = [242, 190, 16, 16]
 const right_box: XYWH = [296, 190, 16, 16]
@@ -668,7 +686,17 @@ function piece_to_i(p: Pieces) {
 
 function _update(delta: number) {
 
+    t_neutral -= delta
     t_flash += delta
+
+    if (t_neutral < 0) {
+
+        if (t_flash % 10000 < 2000) {
+            i_expr = Exprs['sleepy']
+        } else {
+            i_expr = Exprs['neutral']
+        }
+    }
 
     if (drag.is_hovering) {
         cursor = drag.is_hovering
@@ -720,6 +748,10 @@ function _update(delta: number) {
     }
 
     if (drag.is_up) {
+        if (is_muted === undefined && !is_music_playing) {
+            is_muted = false
+            play_music()
+        }
         if (drag_hp) {
 
             if (drag_hp.orig) {
@@ -742,6 +774,10 @@ function _update(delta: number) {
             pp_fix_twos()
             drag_hp = undefined
             is_dirty_rule_render = true
+            i_expr = Exprs['playful']
+            t_neutral = 3000
+
+            play(sounds['drop'])
         }
 
 
@@ -756,6 +792,15 @@ function _update(delta: number) {
         if (is_hovering_right) {
             go_nav(1)
         }
+
+        if (box_intersect(audio_box, cursor_box(drag.is_up))) {
+            is_muted = !is_muted
+            if (is_muted) {
+                stop_music()
+            } else {
+                play_music()
+            }
+        }
     }
 
     if (is_dirty_rule_render) {
@@ -767,6 +812,7 @@ function _update(delta: number) {
 
         let pa = pp_attacks()
 
+        let nb_matched = 0
         let all_matched = true
         let y = 2
         for (let a of ga) {
@@ -777,6 +823,9 @@ function _update(delta: number) {
             let a2 = pa.find(_ => _.p1 === a.p1)
 
             let s_match = a2 === undefined || !aa_match(a, a2) ? 29 : 30
+            if (s_match === 30) {
+                nb_matched++
+            }
 
             all_matched = all_matched && s_match === 30
 
@@ -795,6 +844,12 @@ function _update(delta: number) {
             y += 14
             x = 182
         }
+
+        if (nb_matched0 > nb_matched) {
+            i_expr = Exprs[Math.random() < 0.8 ? 'angry' : 'sad']
+            t_neutral = 1500
+        }
+        nb_matched0 = nb_matched
 
         if (all_matched) {
             go_solved()
@@ -827,6 +882,11 @@ function _update(delta: number) {
 }
 
 function go_solved() {
+
+    play(sounds['correct'])
+    i_expr = Exprs['surprised']
+    t_neutral = 5000
+
     levels[i_level].is_solved = true
     if (i_level < levels.length - 1) {
         if (levels.findIndex(_ => !_.is_solved) === -1) {
@@ -857,7 +917,10 @@ function go_nav(delta: number) {
     let is_next_chapter = levels[next_level].chapter !== levels[i_level].chapter
 
     if (is_next_chapter) {
+        play(sounds['chapter'])
         reset_pp()
+    } else {
+        play(sounds['next'])
     }
 
     is_dirty_rule_render = true
@@ -865,6 +928,8 @@ function go_nav(delta: number) {
 
     if (is_next_chapter) {
         info_welcome = infos[`welcome${levels[i_level].chapter}`]
+        i_expr = Exprs['surprised']
+        t_neutral = 5000
     }
 }
 
@@ -1084,7 +1149,22 @@ let is_hovering_right: boolean
 
 let is_game_over: boolean
 
+let is_music_playing: boolean
+
+let is_muted: boolean | undefined
+
 function _init() {
+
+    if (is_music_playing) {
+        stop_music()
+    }
+
+    is_music_playing = false
+
+    nb_matched0 = 0
+
+    i_expr = Exprs['happy']
+    t_neutral = 5000
 
     is_game_over = false
 
