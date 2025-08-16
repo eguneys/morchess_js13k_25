@@ -20,6 +20,18 @@ let correct = await generate(3, (i: number) => {
     }
 });
 
+let done_chapter = await generate(4, (i: number) => {
+    if (i / 44100 % 0.04 < 0.02) {
+        return sqr(i * 2 * Math.PI * (840 * i / 0.4) / 44100) * 0.1
+    } else if (i / 44100 < 0.6) {
+        return sqr(saw(i / 44100 * 2 * Math.PI * (i / 500 + 340)) * 2 * Math.PI * 340 / 44100) * 0.2
+    } else {
+        return sqr(i * 2 * Math.PI * (i / 10500 + 660) / 44100) * 0.1
+    }
+});
+
+
+
 let drop = await generate(.12, (i: number) => {
     if (i / 44100 % 0.2 < 0.1) {
         return sin(rnd() * 0.05 + i * 2 * Math.PI * 140 / 44100) * 0.5
@@ -36,7 +48,8 @@ export const sounds = {
     drop,
     correct,
     next,
-    chapter
+    chapter,
+    done_chapter
 }
 
 export { play } from './infernal_sfx'

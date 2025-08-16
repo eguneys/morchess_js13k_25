@@ -6,9 +6,9 @@ import { play_music, stop_music } from './play_music'
 import { box_intersect, type XY, type XYWH } from './util'
 import { play, sounds } from './play_sounds'
 
-import { mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
+import { fen_to_scontext, mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
 import type { Square } from './chess/types'
-import { squareFromCoords } from './chess/util'
+import { squareFile, squareFromCoords, squareRank } from './chess/util'
 
 console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print_a_piece))
 
@@ -270,16 +270,20 @@ function render_nav() {
     spr(118, 296 + right_edge, 190, 2)
 
 
-    spr(i_expr + (levels[i_level].is_solved ? 8 : 0), 250, 214, 3)
+    spr(i_expr + (levels[i_level].is_revealed ? 16 : levels[i_level].is_solved ? 8 : 0), 250, 214, 3)
 
     spr(is_muted === undefined || is_muted ? 116 : 115, 298, 214, 2)
 }
 
+
+let cat_box: XYWH = [250, 214, 48, 48]
 let audio_box: XYWH = [298, 214, 16, 16]
 
 let nb_matched0: number
 let t_neutral: number
 let i_expr: number
+
+let t_reveal: number
 
 const Exprs = {
     neutral: 4,
@@ -570,9 +574,16 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
             let _aa = aaa.find(_ => _.p1 === a.p1)
             let abb = _aa?.blocked_attacked_by.filter(_ => _[0] === bb[0] && _[1] === bb[1]) ?? []
             if (abb.length === 0) {
-                no_arrows = [...find_arrow_for_pq(bb[0], bb[1]), ...find_arrow_for_pq(a.p1, bb[1])]
+                no_arrows = [...find_arrow_for_pq(bb[0], bb[1]), ...find_arrow_for_pq(a.p1, bb[0])]
             } else {
                 yes_arrows = [...find_arrow_for_pq(a.p1, bb[0])]
+            }
+
+            abb = _aa?.attacked_by.filter(_ => _ === bb[0]).map(_ => [_, _]) ?? []
+            abb = abb.concat(_aa?.blocks.filter(_ => _[0] === bb[0]) ?? [])
+
+            if (abb.length > 0) {
+                no_arrows = [...find_arrow_for_pq(a.p1, bb[0])]
             }
 
 
@@ -591,9 +602,10 @@ function build_render_a(a: AttackPiece, x: number, y: number) {
 }
 
 const infos: Record<string, any> = {
-    welcome0: ['welcome to mor chess; drag pieces onto the board, but there are some rules above. hover over them for details.', 'drag off of the board to remove a piece.'],
-    welcome1: ['each chapter; introduces a position progressively by revealing more of it\'s pieces', 'to keep your memory fresh.'],
-    welcome2: ['chess tactics; are born out of relationships.', 'entangle them is our job.'],
+    welcome0: ['welcome to mor chess; drag pieces onto the board, but there are some rules above. hover over them for details.', 'drag a piece off the board to remove it.'],
+    welcome1: ['each chapter; proressively reveals more pieces of a single position.', 'call out the cat 3 times, if you get in a mess ;)'],
+    welcome2: ['chess tactics; are born out of relationships.', 'our job is to entangle them.'],
+    welcome3: ['rules are tools to an end.', 'look here, just enough to keep the cats happy.'],
     well_done: ['Congratulations, you satisfied all rules. Time to go deeper.', 'Click Next to continue.'],
     well_end: ['the end; chess is fascinating isn\'t it, go play some chess.', 'Thank\'s for playing'],
     equals(matched: boolean) {
@@ -623,7 +635,7 @@ const infos: Record<string, any> = {
         let p1 = pretty_piece(piece)
         let a1 = pretty_piece(attacks)
 
-        return [`${p1} is ${attacking(piece, attacks)} ${a1}.`, ``]
+        return [`${p1} is ${attacking(piece, attacks)} ${a1}.`, `${a1} shouldn't be blocking an attack of ${p1}.`]
     },
     attacked_by(piece: Pieces, attacks: Pieces) {
 
@@ -683,8 +695,19 @@ function piece_to_i(p: Pieces) {
     return 76+ role_to_i[p1.role] + (p1.color === 'white' ? 16 : 0)
 }
 
-
 function _update(delta: number) {
+
+    t_reveal -= delta
+    if (t_reveal < 0) {
+        t_reveal = 0
+    }
+    if (t_reveal > 1000) {
+        t_reveal = 0
+        if (!levels[i_level].is_revealed) {
+            levels[i_level].is_revealed = true
+            pp_reveal_level()
+        }
+    }
 
     t_neutral -= delta
     t_flash += delta
@@ -729,10 +752,20 @@ function _update(delta: number) {
         }
 
 
+        is_hovering_cat = box_intersect(cat_box, cursor_box(cursor))
+
         is_hovering_next = info_well !== undefined && box_intersect(next_box, cursor_box(cursor))
 
         is_hovering_left = box_intersect(left_box, cursor_box(cursor))
         is_hovering_right = box_intersect(right_box, cursor_box(cursor))
+
+
+        if (is_hovering_cat) {
+            if (t_neutral < 0) {
+                i_expr = Exprs['playful']
+                t_neutral = 260
+            }
+        }
     }
 
     if (drag.is_just_down) {
@@ -783,7 +816,11 @@ function _update(delta: number) {
 
         if (is_hovering_next) {
             
-            go_nav(0)
+            if (i_level === levels.length - 1) {
+                go_nav(0)
+            } else {
+                go_nav(1)
+            }
         }
 
         if (is_hovering_left) {
@@ -800,6 +837,13 @@ function _update(delta: number) {
             } else {
                 play_music()
             }
+        }
+
+        if (is_hovering_cat) {
+            i_expr = Exprs['sad']
+            t_neutral = 1000
+
+            t_reveal += 540
         }
     }
 
@@ -883,11 +927,20 @@ function _update(delta: number) {
 
 function go_solved() {
 
-    play(sounds['correct'])
+    levels[i_level].is_solved = true
+
+    let is_done_chapter = levels
+        .filter(_ => _.chapter === levels[i_level].chapter)
+        .every(_ => _.is_solved)
+
+    if (is_done_chapter) {
+        play(sounds['done_chapter'])
+    } else {
+        play(sounds['correct'])
+    }
     i_expr = Exprs['playful']
     t_neutral = 5000
 
-    levels[i_level].is_solved = true
     if (i_level < levels.length - 1) {
         if (levels.findIndex(_ => !_.is_solved) === -1) {
             is_game_over = true
@@ -904,6 +957,11 @@ function go_solved() {
 }
 
 function go_nav(delta: number) {
+
+    if (levels[i_level].is_revealed) {
+        levels[i_level].is_revealed = false
+        levels[i_level].is_solved = false
+    }
 
     let next_level = i_level + delta
     if (delta === 0) {
@@ -931,6 +989,23 @@ function go_nav(delta: number) {
         i_expr = Exprs['surprised']
         t_neutral = 5000
     }
+}
+
+function pp_reveal_level() {
+
+    reset_pp()
+
+
+    let sx = fen_to_scontext(levels[i_level].fen)
+
+    for (let key of Object.keys(sx)) {
+        let file = squareFile(sx[key])
+        let rank = squareRank(sx[key])
+
+        pp.push(make_pp(key, pos_from_fr([file, 7 - rank])))
+    }
+
+    is_dirty_rule_render = true
 }
 
 function pp_fix_twos() {
@@ -1102,21 +1177,36 @@ type Level = {
     level: number,
     fen: FEN,
     is_solved: boolean
+    is_revealed: boolean
 }
 
 let levels = [
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 0, 0),
-    level_fen("8/5k2/8/8/8/8/6PP/6K1 w - - 0 1", 0, 1),
-    level_fen("8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1", 0, 2),
-    level_fen("8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1", 0, 3),
-    level_fen("3r4/5k2/8/8/3n4/8/8/3R2K1 w - - 0 1", 0, 4),
-    level_fen("3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1", 0, 5),
-    level_fen("3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1", 0, 6),
-    level_fen("3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1", 0, 7),
+    level_fen("6k1/8/8/8/8/8/5P2/6K1 w - - 0 1", 0, 1),
+    level_fen("6k1/8/8/8/8/8/6PP/6K1 w - - 0 1", 0, 2),
+    level_fen("6k1/8/8/3r4/8/5B2/5P2/6K1 w - - 0 1", 0, 3),
+    level_fen("6k1/b7/8/3r4/8/5B2/5P2/6K1 w - - 0 1", 0, 4),
+    level_fen("1r4k1/bP6/8/8/8/5B2/5P2/6K1 w - - 0 1", 0, 5),
+    level_fen("1r4k1/bP6/4p3/3r4/8/5B2/5P2/6K1 w - - 0 1", 0, 6),
+    level_fen("1r4k1/bP6/4p3/p2r4/8/5B2/5P2/R5K1 w - - 0 1", 0, 7),
 
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 0),
-    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 1, 1),
+    level_fen("8/1K6/4b3/8/3r4/4k3/8/8 w - - 0 1", 1, 1),
+    level_fen("8/1K6/4b3/4R3/3rP3/4k3/8/8 w - - 0 1", 1, 2),
+
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 2, 0),
+    level_fen("8/5k2/8/8/8/8/6PP/6K1 w - - 0 1", 2, 1),
+    level_fen("8/5k2/4rn2/8/8/8/6PP/6K1 w - - 0 1", 2, 2),
+    level_fen("8/5k2/8/8/8/8/8/R2R2K1 w - - 0 1", 2, 3),
+    level_fen("3r4/5k2/8/8/3n4/8/8/3R2K1 w - - 0 1", 2, 4),
+    level_fen("3r4/6k1/5rn1/8/3n4/8/6PP/3R2K1 w - - 0 1", 2, 5),
+    level_fen("3r4/6k1/5rn1/1p6/2Nn4/8/6PP/R2R2K1 w - - 0 1", 2, 6),
+    level_fen("3r4/5k2/4rn2/1p6/2N5/3n4/1B4PP/R2R2K1", 2, 7),
+
+    level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 3, 0),
+    level_fen("6k1/8/8/8/8/8/7q/1K1Q4 w - - 0 1", 3, 1),
+    level_fen("6k1/7p/8/8/8/8/2Pr3q/1K1QR3 w - - 0 1", 3, 2),
+    level_fen("6k1/7p/8/6p1/8/8/1PPr3q/1K1QR3 w - - 0 1", 3, 3),
 ]
 
 let i_level: number
@@ -1127,7 +1217,8 @@ function level_fen(fen: FEN, chapter: number, level: number): Level {
         chapter,
         level,
         fen,
-        is_solved: false
+        is_solved: false,
+        is_revealed: false
     }
 }
 
@@ -1142,6 +1233,8 @@ let info_end: [string, string] | undefined
 
 let t_flash: number
 
+let is_hovering_cat: boolean
+
 let is_hovering_next: boolean
 
 let is_hovering_left: boolean
@@ -1153,7 +1246,11 @@ let is_music_playing: boolean
 
 let is_muted: boolean | undefined
 
+
 function _init() {
+
+
+    t_reveal = 0
 
     if (is_music_playing) {
         stop_music()

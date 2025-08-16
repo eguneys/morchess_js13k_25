@@ -162,6 +162,7 @@ function s_attacks(s: SContext) {
         }
     }
 
+    res.sort((a, b) => a.join(' ').localeCompare(b.join(' ')))
     return res
 }
 
@@ -174,7 +175,7 @@ function s_occupied(s: SContext) {
     return res
 }
 
-function fen_to_scontext(fen: FEN) {
+export function fen_to_scontext(fen: FEN) {
     fen = fen.split(' ')[0]
 
     let res: SContext = {}
