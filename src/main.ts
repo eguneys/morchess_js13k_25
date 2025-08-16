@@ -774,7 +774,7 @@ function _update(delta: number) {
             pp_fix_twos()
             drag_hp = undefined
             is_dirty_rule_render = true
-            i_expr = Exprs['playful']
+            i_expr = Exprs['surprised']
             t_neutral = 3000
 
             play(sounds['drop'])
@@ -884,7 +884,7 @@ function _update(delta: number) {
 function go_solved() {
 
     play(sounds['correct'])
-    i_expr = Exprs['surprised']
+    i_expr = Exprs['playful']
     t_neutral = 5000
 
     levels[i_level].is_solved = true
