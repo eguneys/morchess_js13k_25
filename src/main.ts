@@ -157,12 +157,53 @@ function wrap_text_fx(text: string, x: number, y: number, maxWidth: number, line
     fx.fillText(line, x, lineY);
 }
 
+function render_intro() {
+
+    if (t_drop_cat === -1) {
+        if (t_flash % 1000 < 500) {
+            fx.strokeStyle = 'white'
+        } else {
+            fx.strokeStyle = 'gray'
+        }
+        fx.lineWidth = 3
+        fx.font = '80px Arial'
+        fx.strokeText('click to begin', 100, 1000)
+    }
+
+
+    if (t_drop_cat > 5500) {
+        spr(0, 200, 50, 2.5)
+        spr(98, 300, 100, 5)
+    } else if (t_drop_cat > 4000) {
+        spr(1, 280, 90, 3)
+    } else if (t_drop_cat > 1800) {
+        spr(4, 280, 90, 6)
+    } else if (t_drop_cat > 800) {
+        spr(10, 290, 90, 6)
+    } else if (t_drop_cat === -1) {
+        let blink = t_flash % 4000
+        if (blink < 500 || (blink > 800 && blink < 1300)) {
+            spr(100, 300, 100, 5)
+        } else {
+            spr(99, 300, 100, 5)
+        }
+        spr(101, 180, 150, 6)
+    }
+
+}
+
 function _render() {
 
     fx.clearRect(0, 0, 1920, 1080)
 
-    cx.fillRect(0, 0, 320, 180)
+    cx.fillStyle = 'black'
+    cx.fillRect(0, 0, 480, 270)
 
+    if (is_intro) {
+        render_intro()
+        spr(28, ...cursor)
+        return
+    }
 
     spr(110, 0, 0, 320)
 
@@ -667,7 +708,7 @@ const infos: Record<string, any> = {
         let p1 = pretty_piece(piece)
         let a1 = pretty_piece(attacks)
 
-        return [`${p1} is ${attacked(piece, attacks)} by ${a1}.`, ``]
+        return [`${p1} is ${attacked(piece, attacks)} by ${a1}.`, `${p1} shouldn't be blocking an attack of ${a1}.`]
     },
     blocks(piece: Pieces, a: Pieces, b: Pieces) {
 
@@ -722,6 +763,13 @@ function piece_to_i(p: Pieces) {
 
 function _update(delta: number) {
 
+    if (t_drop_cat > 0) {
+        t_drop_cat -= delta
+
+        if (t_drop_cat <= 0) {
+            is_intro = false
+        }
+    }
     t_reveal -= delta
     if (t_reveal < 0) {
         t_reveal = 0
@@ -806,6 +854,12 @@ function _update(delta: number) {
     }
 
     if (drag.is_up) {
+
+        if (is_intro) {
+            t_drop_cat = 6000
+            play(sounds['done_chapter'])
+        }
+
         if (is_muted === undefined && !is_music_playing) {
             is_muted = false
             play_music()
@@ -1252,6 +1306,9 @@ const goal_attacks = () => {
     return short_short(levels[i_level].fen)
 }
 
+let is_intro: boolean
+let t_drop_cat: number
+
 let info_welcome: [string, string]
 let info_well: [string, string] | undefined
 let info_call: [string, string] | undefined
@@ -1275,6 +1332,8 @@ let is_muted: boolean | undefined
 
 function _init() {
 
+    is_intro = true
+    t_drop_cat = -1
 
     t_reveal = 0
 

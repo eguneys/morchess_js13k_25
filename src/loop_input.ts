@@ -8,7 +8,7 @@ export function Loop(update: (dt: number) => void, render: (alpha: number) => vo
     requestAnimationFrame(step)
 
 
-    let delta_time = Math.min(current_time - last_time, 1000)
+    let delta_time = Math.min(current_time - last_time, 250)
     last_time = current_time
 
     accumulator += delta_time
