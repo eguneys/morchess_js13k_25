@@ -3,7 +3,7 @@ import sprite_bg_png from '../design/sprites_with_bg_alpha_working.png'
 import { Loop } from './loop_input'
 import { DragHandler } from './drag'
 import { play_music as _play_music, play_music3, play_music2, stop_music } from './play_music'
-import { box_intersect, type XY, type XYWH } from './util'
+import { appr, box_intersect, type XY, type XYWH } from './util'
 import { play, sounds } from './play_sounds'
 
 import { fen_to_scontext, mor_short, parse_piece, print_a_piece, zero_attacked_by_lower, zero_attacked_by_upper, type AttackPiece, type FEN, type Pieces } from './chess/mor_short'
@@ -14,6 +14,7 @@ console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print
 
 //play_music3()
 
+let t_: number
 let music_chapter: number
 const play_music = () => {
 
@@ -25,7 +26,8 @@ const play_music = () => {
 
     stop_music()
 
-    setTimeout(() => {
+    clearTimeout(t_)
+    t_ = setTimeout(() => {
 
         if (chapter === 0) {
             _play_music()
@@ -35,7 +37,7 @@ const play_music = () => {
             play_music3()
         }
         music_chapter = chapter
-    }, 1000)
+    }, 3000)
 }
 
 function load_image(src: string) {
@@ -226,6 +228,8 @@ function _render() {
 
     spr(111, off_x, off_y, 3.5 * 8, 3)
 
+
+
     for (let p of pp) {
         spr(piece_to_i(p.piece), ...p.pos, 3)
         if (p.piece.match(/2/)) {
@@ -289,6 +293,16 @@ function _render() {
 
     render_nav()
 
+    for (let p of pp_fly) {
+        spr(piece_to_i(p.piece), ...p.pos, 4)
+        if (p.piece.match(/2/)) {
+            spr(82, ...p.pos, 4)
+        }
+    }
+
+    if (t_smack > 0) {
+        spr(2, 60, 60, 4)
+    }
 
     spr(28, ...cursor)
 
@@ -763,6 +777,8 @@ function piece_to_i(p: Pieces) {
 
 function _update(delta: number) {
 
+    t_smack -= delta
+
     if (t_drop_cat > 0) {
         t_drop_cat -= delta
 
@@ -855,7 +871,7 @@ function _update(delta: number) {
 
     if (drag.is_up) {
 
-        if (is_intro) {
+        if (t_drop_cat === -1 && is_intro) {
             t_drop_cat = 6000
             play(sounds['done_chapter'])
         }
@@ -1001,6 +1017,21 @@ function _update(delta: number) {
             is_dirty_rule_render = true
         }
     }
+
+
+
+    let res = []
+    for (let p of pp_fly) {
+        if (t_flash % 300 < 120) {
+            p.pos[0] = appr(p.pos[0], p.t_pos[0], 8)
+            p.pos[1] = appr(p.pos[1], p.t_pos[1], 8)
+        }
+        if (p.pos[0] < 0 || p.pos[1] < 0 || p.pos[0] > 400 || p.pos[1] > 300) {
+        } else {
+            res.push(p)
+        }
+    }
+    pp_fly = res
 
 }
 
@@ -1220,14 +1251,16 @@ type PieceOnPos = {
     is_hovering: boolean
     is_dragging: boolean
     orig?: PieceOnPos
+    t_pos: XY
 }
 
-function make_pp(piece: Pieces, pos: XY) {
+function make_pp(piece: Pieces, pos: XY): PieceOnPos {
     return {
         piece,
         pos,
         is_hovering: false,
-        is_dragging: false
+        is_dragging: false,
+        t_pos: [0, 0]
     }
 }
 
@@ -1261,6 +1294,9 @@ type Level = {
 }
 
 let levels = [
+
+    //level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", -1, 0),
+
     level_fen("5k2/8/8/8/8/8/8/4K3 w - - 0 1", 0, 0),
     level_fen("6k1/8/8/8/8/8/5P2/6K1 w - - 0 1", 0, 1),
     level_fen("6k1/8/8/8/8/8/6PP/6K1 w - - 0 1", 0, 2),
@@ -1368,12 +1404,26 @@ function _init() {
     drag_hp = undefined
 
     pp = []
+    pp_fly = []
     reset_pp()
     drag = DragHandler(c)
     cursor = [0, 0]
+
+
+    t_smack = 0
 }
 
+let t_smack: number
+let pp_fly: PieceOnPos[]
+
 function reset_pp() {
+
+    t_smack = 1300
+    pp_fly = pp.filter(_ => pos2board_file_rank(_.pos) !== undefined)
+
+    for (let p of pp_fly) {
+        p.t_pos = [Math.random() < 0.5 ? - 100 : 500,-300 + Math.random() * 600]
+    }
 
     let off_x = 20
     let off_y = 0
