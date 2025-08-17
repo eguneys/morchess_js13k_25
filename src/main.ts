@@ -16,11 +16,11 @@ console.log(mor_short("8/8/4r3/r1n5/1k1B4/6Np/1PP1n3/2KRR3 w - - 0 1").map(print
 
 let t_: number
 let music_chapter: number
-const play_music = () => {
+const play_music = (force = false) => {
 
     let { chapter } = levels[i_level]
 
-    if (music_chapter === chapter) {
+    if (!force && music_chapter === chapter) {
         return
     }
 
@@ -37,7 +37,7 @@ const play_music = () => {
             play_music3()
         }
         music_chapter = chapter
-    }, 3000)
+    }, 1000)
 }
 
 function load_image(src: string) {
@@ -930,7 +930,7 @@ function _update(delta: number) {
             if (is_muted) {
                 stop_music()
             } else {
-                play_music()
+                play_music(true)
             }
         }
 
