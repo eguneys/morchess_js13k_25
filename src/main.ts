@@ -1070,6 +1070,7 @@ function go_nav(delta: number) {
     play_music()
 
     if (levels[i_level].is_revealed) {
+        reset_pp()
         levels[i_level].is_revealed = false
         levels[i_level].is_solved = false
     }
