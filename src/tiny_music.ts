@@ -1,3 +1,4 @@
+/* https://github.com/kevincennis/TinyMusic */
 type NoteName = string
 
 let enharmonics = 'B#-C|C#-Db|D|D#-Eb|E-Fb|E#-F|F#-Gb|G|G#-Ab|A|A#-Bb|B-Cb',

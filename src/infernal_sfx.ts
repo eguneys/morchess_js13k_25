@@ -1,5 +1,6 @@
 import { cx } from './play_music'
 
+/* https://github.com/arikwex/infernal-sigil */
 export const sin = (i: number) => Math.sin(i);
 export const saw = (i: number) => ((i % 6.28) - 3.14) / 6.28;
 export const sqr = (i: number) => clamp(Math.sin(i) * 1000, -1, 1);
