@@ -50,4 +50,4 @@ I also have aims to flex these ideas into creating a more informal type of chess
 I would have liked to remove this line of code in `package.json` and integrate that into [vite](https://vite.dev/) build process. `"zip": "cd tools && optipng.exe -o7 ../dist/assets/*.png && cd ../dist && 7z a ../dist.zip -mx9 && cd .. && cd tools && advzip.exe --recompress --shrink-extra ../dist.zip",`, so that each time I run build, I can immediately see the zipped build size in total.
 
 
-And That's it, I have been submitting games to JS13k each year since 2019, only get to 60'ies once and got a T-Shirt. Hopefully this year will be in my luck.
+And That's about it, I have been submitting games to JS13k each year since 2019, only get to 60'ies once and got a T-Shirt. Hopefully this year will be in my luck.
