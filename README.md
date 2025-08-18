@@ -35,7 +35,7 @@ For music I used [https://github.com/kevincennis/TinyMusic](https://github.com/k
 
 Which is neat, because I preemptively composed a few sheet music in [MuseScore](https://musescore.org), specifically for Mor Chess, before the jam started.
 
-It took a while to translate the notes into text, but it's very doable and easy, just takes a little bit of time, especially taking into the fact that I am not proficient with reading sheet music, with the notes in treble or bass cleff. I had a reference open on another tab to look at, and I had a lot of help from AI to compose the music for me. I mean I have a basic understanding of how music works, but have basically zero experience about notes, keys or scales. I don't even play any instruments. Nevertheless, I have some decent 8 bit sounding music that doesn't hurt ears at first hear.
+It took a while to translate the notes into text, but it's very doable and easy, just takes a little bit of time, especially taking into the fact that I am not proficient with reading sheet music, with the notes being in treble or bass cleff. I had a reference open on another tab to look at, and I had a lot of help from AI to compose the music for me. I mean I have a basic understanding of how music works, but have basically zero experience about notes, keys or scales. I don't even play any instruments. Nevertheless, I have some decent 8 bit sounding music that doesn't hurt ears at first hear.
 
 ## Game Design
 
