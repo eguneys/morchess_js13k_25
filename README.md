@@ -24,7 +24,9 @@ For text, I had a second canvas on top of the images with a 1920x1080 resolution
 ## Audio
 
 Compression was my top priority, so I come up with the best effective results in terms of audio code usage.
+
 For sounds fx I used the technique in [Infernal Sigil](https://github.com/arikwex/infernal-sigil), a previous JS13k entry by arikwex. It's really short and you draw your own sounds in code, using wave functions like `sin` `sqr` `saw`, or `random` with a specified duration.
+
 For music I used [https://github.com/kevincennis/TinyMusic](https://github.com/kevincennis/TinyMusic), which is mentioned in the JS13k Website Resources page. Apart from being really small, it let's you specify notes and duration in text like this:
 
 ```
@@ -53,4 +55,5 @@ I would have liked to remove this line of code in `package.json` and integrate t
 And That's about it, I have been submitting games to JS13k each year since 2019, only get to 60'ies once and got a T-Shirt. Hopefully this year will be in my luck.
 
 Play Mor Chess here: [https://js13kgames.com/2025/games/mor-chess](https://js13kgames.com/2025/games/mor-chess)
+
 Play Coler (my entry in top 100 in 2020) here: [https://js13kgames.com/2020/games/coler](https://js13kgames.com/2020/games/coler)
