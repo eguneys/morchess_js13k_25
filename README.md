@@ -51,3 +51,6 @@ I would have liked to remove this line of code in `package.json` and integrate t
 
 
 And That's about it, I have been submitting games to JS13k each year since 2019, only get to 60'ies once and got a T-Shirt. Hopefully this year will be in my luck.
+
+Play Mor Chess here: [https://js13kgames.com/2025/games/mor-chess](https://js13kgames.com/2025/games/mor-chess)
+Play Coler (my entry in top 100 in 2020) here: [https://js13kgames.com/2020/games/coler](https://js13kgames.com/2020/games/coler)
